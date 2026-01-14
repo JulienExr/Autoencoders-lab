@@ -37,4 +37,7 @@ def main_VAE():
     print("Model checkpoints saved as 'encoder.pth' and 'decoder.pth'.")
 
 if __name__ == "__main__":
+    # By default the script runs AE training first, then VAE training.
+    # If you want to run only one, comment the other line.
+    main_AE()
     main_VAE()
