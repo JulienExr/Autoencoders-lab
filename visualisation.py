@@ -51,20 +51,23 @@ class Visualiser:
                     plt.imshow(images[i].cpu().squeeze(), cmap='gray')
                     plt.axis('off')
                     if images_shown == 0:
-                        plt.title('Original Images')
+                        fig.text(0.5,0.94,'Original Images', ha='center', va='bottom', fontsize=12, fontweight='bold',
+                                 bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.85, edgecolor='none')
+                        )
 
                     plt.subplot(2, num_images, images_shown + 1 + num_images)
                     plt.imshow(decoded[i].cpu().squeeze(), cmap='gray')
                     plt.axis('off')
                     if images_shown == 0:
-                        plt.title('Reconstructed Images')
-
+                        fig.text(0.5, 0.46, 'Reconstructed Images', ha='center', va='bottom', fontsize=12, fontweight='bold',
+                                 bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.85, edgecolor='none')
+                        )
                     images_shown += 1
-
                 if images_shown >= num_images:
                     break
 
-        fig.tight_layout()
+        fig.subplots_adjust(hspace=0.6)
+        fig.tight_layout(rect=[0.02, 0.02, 0.98, 0.92])
         fig.savefig(self.base_dir / "recon" / f"epoch_{epoch}.png")
         plt.close(fig)
 
@@ -96,7 +99,7 @@ class Visualiser:
         fig = plt.figure(figsize=(7, 6))
         plt.scatter(Z2[:, 0].numpy(), Z2[:, 1].numpy(), s=8, c=Y.numpy())
         plt.colorbar()
-        plt.title("PCA 2D du latent z")
+        plt.title("PCA 2D of latent z")
         fig.savefig(self.base_dir / "pca" / f"epoch_{epoch}.png")
         plt.close(fig)
 
@@ -125,7 +128,7 @@ class Visualiser:
         fig = plt.figure(figsize=(7, 6))
         plt.scatter(Z2[:, 0], Z2[:, 1], s=8, c=Y)
         plt.colorbar()
-        plt.title("UMAP 2D du latent z")
+        plt.title("UMAP 2D of latent z")
         fig.savefig(self.base_dir / "umap" / f"epoch_{epoch}.png")
         plt.close(fig)
 
