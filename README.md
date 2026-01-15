@@ -64,9 +64,9 @@ Why AE sampling fails :
 
 ## Variational Autoencoder (VAE) -- summary and visualizations
 
-The VAE predicts μ and logvar for each input and uses the reparameterization trick to sample z. The loss combines reconstruction + KL divergence to a prior (N(0,I)). This changes behavior:
+The VAE predicts μ and logvar for each input and uses the reparameterization trick to sample z. The loss combines reconstruction + KL divergence to a prior (N(0,1)). This changes behavior:
 
-- The latent space is pushed toward the prior, which makes sampling from N(0,I) meaningful.
+- The latent space is pushed toward the prior, which makes sampling from N(0,1) meaningful.
 - Interpolations tend to be smoother and decoded samples from the prior are more coherent than for a plain AE.
 
 Example placeholders:
