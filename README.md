@@ -184,6 +184,8 @@ MNIST will be downloaded automatically by `torchvision` into `./data` when you r
 
 `main.py` you can choose the model, dataset, and latent dimension:
 
+You can visualize training outputs by adding the `--visualise` flag.
+
 ```bash
 python main.py --model AE --dataset mnist --latent_dim 256
 python main.py --model VAE --dataset mnist --latent_dim 32

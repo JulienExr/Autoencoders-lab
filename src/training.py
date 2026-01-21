@@ -1,10 +1,10 @@
 import torch
 
-from visualisation import Visualiser
+from src.visualisation import Visualiser
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def train_autoencoder(autoencoder, dataloader, test_loader, num_epochs=10, learning_rate=1e-3, device=device, visu_dir="mnist_autoencoder"):
+def train_autoencoder(autoencoder, dataloader, test_loader, num_epochs=10, learning_rate=1e-3, latent_dim=256, device=device, visu_dir="mnist_autoencoder", visualise=True):
     autoencoder.to(device)
     autoencoder.train()
 
@@ -31,17 +31,18 @@ def train_autoencoder(autoencoder, dataloader, test_loader, num_epochs=10, learn
         
         losses.append(epoch_loss / len(dataloader))
         if (epoch + 1) % 5 == 0 or epoch == 0:
-            print("\nGenerating visualizations...")
-            visualiser.visualize_reconstructions(autoencoder, test_loader, num_images=10, device=device, epoch=epoch+1)
-            visualiser.pca_2d_latent(autoencoder, test_loader, device=device, epoch=epoch+1)
-            visualiser.umap_2d_latent(autoencoder, test_loader, device=device, epoch=epoch+1)
-            visualiser.interpolate_2_to_5(autoencoder, test_loader, device=device, epoch=epoch+1)
-            visualiser.visu_from_noise(autoencoder, device=device, latent_dim=256, epoch=epoch+1, num_images=10)
+            print("\nGenerating visualizations...", visualise)
+            if visualise:
+                visualiser.visualize_reconstructions(autoencoder, test_loader, num_images=10, device=device, epoch=epoch+1)
+                visualiser.pca_2d_latent(autoencoder, test_loader, device=device, epoch=epoch+1)
+                visualiser.umap_2d_latent(autoencoder, test_loader, device=device, epoch=epoch+1)
+                visualiser.interpolate_2_to_5(autoencoder, test_loader, device=device, epoch=epoch+1)
+                visualiser.visu_from_noise(autoencoder, device=device, latent_dim=latent_dim, epoch=epoch+1, num_images=10)
             visualiser.plot_losses(losses)
         print(f"\nEpoch [{epoch+1}/{num_epochs}], Loss: {losses[-1]:.4f}")
     return losses
 
-def train_vae(vae, dataloader, test_loader, num_epochs=10, learning_rate=1e-3, latent_dim=256, device=device, visu_dir="mnist_vae"):
+def train_vae(vae, dataloader, test_loader, num_epochs=10, learning_rate=1e-3, latent_dim=256, device=device, visu_dir="mnist_vae", visualise = True):
     vae.to(device)
     vae.train()
 
@@ -84,19 +85,20 @@ def train_vae(vae, dataloader, test_loader, num_epochs=10, learning_rate=1e-3, l
         recon_losses.append(epoch_recon_loss / len(dataloader))
         kl_losses.append(epoch_kl_loss / len(dataloader))
         if (epoch + 1) % 5 == 0 or epoch == 0:
-            print("\nGenerating visualizations...")
-            visualiser.visualize_reconstructions(vae, test_loader, num_images=10, device=device, epoch=epoch+1)
-            visualiser.pca_2d_latent(vae, test_loader, device=device, epoch=epoch+1)
-            visualiser.umap_2d_latent(vae, test_loader, device=device, epoch=epoch+1)
-            visualiser.interpolate_2_to_5(vae, test_loader, device=device, epoch=epoch+1)
-            visualiser.visu_from_noise(vae, device=device, latent_dim=latent_dim, epoch=epoch+1, num_images=10)
+            print("\nGenerating visualizations...", visualise)
+            if visualise:
+                visualiser.visualize_reconstructions(vae, test_loader, num_images=10, device=device, epoch=epoch+1)
+                visualiser.pca_2d_latent(vae, test_loader, device=device, epoch=epoch+1)
+                visualiser.umap_2d_latent(vae, test_loader, device=device, epoch=epoch+1)
+                visualiser.interpolate_2_to_5(vae, test_loader, device=device, epoch=epoch+1)
+                visualiser.visu_from_noise(vae, device=device, latent_dim=latent_dim, epoch=epoch+1, num_images=10)
             visualiser.plot_losses(losses)
             visualiser.plot_losses(recon_losses, name="reconstruction_loss")
             visualiser.plot_losses(kl_losses, name="kl_loss")
         print(f"\nEpoch [{epoch+1}/{num_epochs}], Loss: {losses[-1]:.4f}, Recon Loss: {recon_losses[-1]:.4f}, KL Loss: {kl_losses[-1]:.4f}, Beta: {beta:.4f}")
     return losses
 
-def train_cvae(cvae, dataloader, test_loader, num_epochs=10, learning_rate=1e-3, latent_dim=256, device=device, visu_dir="mnist_cvae"):
+def train_cvae(cvae, dataloader, test_loader, num_epochs=10, learning_rate=1e-3, latent_dim=256, device=device, visu_dir="mnist_cvae", visualise = True):
     cvae.to(device)
     cvae.train()
 
@@ -149,11 +151,12 @@ def train_cvae(cvae, dataloader, test_loader, num_epochs=10, learning_rate=1e-3,
         kl_losses.append(epoch_kl_loss / len(dataloader))
         if (epoch + 1) % 5 == 0 or epoch == 0:
             print("\nGenerating visualizations...")
-            visualiser.visualize_reconstructions(cvae, test_loader, num_images=10, device=device, epoch=epoch+1)
-            visualiser.pca_2d_latent(cvae, test_loader, device=device, epoch=epoch+1)
-            visualiser.umap_2d_latent(cvae, test_loader, device=device, epoch=epoch+1)
-            visualiser.interpolate_2_to_5(cvae, test_loader, device=device, epoch=epoch+1)
-            visualiser.visu_from_noise_by_label(cvae, device=device, latent_dim=latent_dim, epoch=epoch+1, num_per_label=2)
+            if visualise:
+                visualiser.visualize_reconstructions(cvae, test_loader, num_images=10, device=device, epoch=epoch+1)
+                visualiser.pca_2d_latent(cvae, test_loader, device=device, epoch=epoch+1)
+                visualiser.umap_2d_latent(cvae, test_loader, device=device, epoch=epoch+1)
+                visualiser.interpolate_2_to_5(cvae, test_loader, device=device, epoch=epoch+1)
+                visualiser.visu_from_noise_by_label(cvae, device=device, latent_dim=latent_dim, epoch=epoch+1, num_per_label=2)
             visualiser.plot_losses(losses)
             visualiser.plot_losses(recon_losses, name="reconstruction_loss")
             visualiser.plot_losses(kl_losses, name="kl_loss")
