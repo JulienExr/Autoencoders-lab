@@ -64,9 +64,9 @@ def main():
         
         save_path = Path('model/VAE')
         save_path.mkdir(parents=True, exist_ok=True)
-        torch.save(model.encoder.state_dict(), save_path / f'encoder_{args.dataset}.pth')
-        torch.save(model.decoder.state_dict(), save_path / f'decoder_{args.dataset}.pth')
-        print(f"Model saved as '{save_path / f'encoder_{args.dataset}.pth'}' and '{save_path / f'decoder_{args.dataset}.pth'}'.")
+        torch.save(model.encoder.state_dict(), save_path / f'encoder_{args.dataset}_{args.latent_dim}.pth')
+        torch.save(model.decoder.state_dict(), save_path / f'decoder_{args.dataset}_{args.latent_dim}.pth')
+        print(f"Model saved as '{save_path / f'encoder_{args.dataset}_{args.latent_dim}.pth'}' and '{save_path / f'decoder_{args.dataset}_{args.latent_dim}.pth'}'.")
 
     elif args.model == 'CVAE':
         if args.dataset == 'mnist':

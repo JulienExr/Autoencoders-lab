@@ -205,7 +205,7 @@ python main.py --model VAE --dataset fashion_mnist --latent_dim 128
 
 - Model checkpoints are saved under `model/AE/` and `model/VAE/` (encoder/decoder state dicts).
 - Visual outputs are saved under `visu/<dataset>_<model>/` with subfolders `recon`, `pca`, `umap`, `interp`, and `noise`.
-
+- If you want to try with your own model saved on model/* use : `streamlit run app.py`.
 ## Small tips
 
 - The VAE training schedule in `training.py` uses a small beta early on and ramps it; tweak that schedule if you want sharper reconstructions vs tighter latent.
