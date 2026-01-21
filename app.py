@@ -83,9 +83,16 @@ def to_display(imgs: torch.Tensor, normalize_range: str):
     if normalize_range == "-1..1":
         if imgs.min().item() < 0:
             imgs = (imgs + 1) / 2
-    elif normalize_range == "auto":
-        if imgs.min().item() < 0:
-            imgs = (imgs + 1) / 2
+        imgs = imgs.clamp(0, 1)
+        return imgs
+    if normalize_range == "auto":
+        if imgs.ndim == 3:
+            imgs = imgs.unsqueeze(0)
+        min_vals = imgs.amin(dim=(1, 2, 3), keepdim=True)
+        max_vals = imgs.amax(dim=(1, 2, 3), keepdim=True)
+        denom = (max_vals - min_vals).clamp_min(1e-6)
+        imgs = (imgs - min_vals) / denom
+        return imgs.clamp(0, 1)
     imgs = imgs.clamp(0, 1)
     return imgs
 
@@ -173,7 +180,7 @@ elif model_type == "VAE":
     samples = st.session_state["cache"][cache_key].to(device)
 
     st.write("Samples from $z \sim \mathcal{N}(0, I)$")
-    show_grid(samples, nrow=min(8, num_samples), normalize_range="-1..1", display_width=display_width)
+    show_grid(samples, nrow=min(8, num_samples), normalize_range="auto", display_width=display_width)
 
 elif model_type == "CVAE":
     st.subheader("Conditional VAE")
@@ -196,4 +203,4 @@ elif model_type == "CVAE":
     samples = st.session_state["cache"][cache_key].to(device)
 
     st.write("Samples from $z \sim \mathcal{N}(0, I)$ with label conditioning")
-    show_grid(samples, nrow=min(8, num_samples), normalize_range="-1..1", display_width=display_width)
+    show_grid(samples, nrow=min(8, num_samples), normalize_range="auto", display_width=display_width)
