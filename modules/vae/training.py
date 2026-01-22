@@ -31,7 +31,7 @@ def train_vae(vae, dataloader, test_loader, num_epochs=10, learning_rate=1e-3, l
                 beta = 0.005
             else:
                 beta = min(1.0, (epoch+1) / 500.0)
-                beta *= 0.3
+                beta *= 1.0
             loss = recon_loss + beta * kl_loss
 
             optimizer.zero_grad()
