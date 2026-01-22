@@ -41,7 +41,7 @@ def main():
         train_autoencoder(model, train_loader, test_loader, num_epochs=args.epochs, learning_rate=1e-3,
                    latent_dim=args.latent_dim, device=device, visu_dir=f"{args.dataset}_autoencoder", visualise=args.visualise)
         
-        save_path = Path('model/AE')
+        save_path = Path('models/AE')
         save_path.mkdir(parents=True, exist_ok=True)
         torch.save(model.encoder.state_dict(), save_path / f'encoder_{args.dataset}_{args.latent_dim}.pth')
         torch.save(model.decoder.state_dict(), save_path / f'decoder_{args.dataset}_{args.latent_dim}.pth')
@@ -62,7 +62,7 @@ def main():
         train_vae(model, train_loader, test_loader, num_epochs=args.epochs, learning_rate=1e-3, latent_dim=args.latent_dim,
                    device=device, visu_dir=f"{args.dataset}_vae", visualise=args.visualise)
         
-        save_path = Path('model/VAE')
+        save_path = Path('models/VAE')
         save_path.mkdir(parents=True, exist_ok=True)
         torch.save(model.encoder.state_dict(), save_path / f'encoder_{args.dataset}_{args.latent_dim}.pth')
         torch.save(model.decoder.state_dict(), save_path / f'decoder_{args.dataset}_{args.latent_dim}.pth')
@@ -83,7 +83,7 @@ def main():
         train_cvae(model, train_loader, test_loader, num_epochs=args.epochs, learning_rate=1e-3, latent_dim=args.latent_dim,
                     device=device, visu_dir=f"{args.dataset}_cvae", visualise=args.visualise)
         
-        save_path = Path('model/CVAE')
+        save_path = Path('models/CVAE')
         save_path.mkdir(parents=True, exist_ok=True)
         torch.save(model.encoder.state_dict(), save_path / f'encoder_{args.dataset}.pth')
         torch.save(model.decoder.state_dict(), save_path / f'decoder_{args.dataset}.pth')

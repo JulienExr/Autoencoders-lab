@@ -25,7 +25,7 @@ This repository contains clean PyTorch implementations of an Autoencoder (AE) an
 - `main.py` -- example entry points. By default it runs AE training then VAE training (see note below).
 - `visualisation.py` -- `Visualiser` helper used by `training.py` to save reconstructions, PCA plots, interpolations and noise samples into `visu/`.
 - `data.py` -- MNIST dataloader helpers.
-- `model/AE/`, `model/VAE/`, `model/CVAE/` -- expected checkpoints are saved here (encoder/decoder state dicts).
+- `models/AE/`, `models/VAE/`, `models/CVAE/` -- expected checkpoints are saved here (encoder/decoder state dicts).
 
 
 ## Autoencoder (AE) -- summary and visualizations
@@ -203,9 +203,9 @@ python main.py --model VAE --dataset fashion_mnist --latent_dim 128
 
 4. Outputs
 
-- Model checkpoints are saved under `model/AE/` and `model/VAE/` (encoder/decoder state dicts).
+- Model checkpoints are saved under `models/AE/` and `models/VAE/` (encoder/decoder state dicts).
 - Visual outputs are saved under `visu/<dataset>_<model>/` with subfolders `recon`, `pca`, `umap`, `interp`, and `noise`.
-- If you want to try with your own model saved on model/* use : `streamlit run app.py`.
+- If you want to try with your own model saved on models/* use : `streamlit run app.py`.
 ## Small tips
 
 - The VAE training schedule in `training.py` uses a small beta early on and ramps it; tweak that schedule if you want sharper reconstructions vs tighter latent.

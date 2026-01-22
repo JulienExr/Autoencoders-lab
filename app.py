@@ -48,13 +48,13 @@ def get_available_latent_dims(model_dir: Path, dataset: str) -> list[int]:
 def load_model(model_type: str, dataset: str, latent_dim: int, device: str):
     if model_type == "AE":
         model = build_autoencoder(latent_dim=latent_dim)
-        model_dir = Path("model/AE")
+        model_dir = Path("models/AE")
     elif model_type == "VAE":
         model = build_vae(latent_dim=latent_dim, mode="pp")
-        model_dir = Path("model/VAE")
+        model_dir = Path("models/VAE")
     elif model_type == "CVAE":
         model = build_cvae(latent_dim=latent_dim)
-        model_dir = Path("model/CVAE")
+        model_dir = Path("models/CVAE")
     else:
         raise ValueError(f"Unsupported model type: {model_type}")
 
@@ -109,11 +109,11 @@ with st.sidebar:
     model_type = st.selectbox("Model", ["AE", "VAE", "CVAE"])
     dataset = st.selectbox("Dataset", ["mnist", "fashion_mnist"])
     if model_type == "AE":
-        model_dir = Path("model/AE")
+        model_dir = Path("models/AE")
     elif model_type == "VAE":
-        model_dir = Path("model/VAE")
+        model_dir = Path("models/VAE")
     else:
-        model_dir = Path("model/CVAE")
+        model_dir = Path("models/CVAE")
 
     available_dims = get_available_latent_dims(model_dir, dataset)
     if available_dims:
