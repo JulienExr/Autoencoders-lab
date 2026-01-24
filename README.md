@@ -1,4 +1,4 @@
-# Autoencoder & VAE on MNIST
+# Simple implementations of different types of Autoencoders in PyTorch
 
 ## Overview
 
