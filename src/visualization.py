@@ -8,13 +8,13 @@ import umap
 
 class Visualizer:
 
-    def __init__(self, directory, vae=False, forward_fn=None, label_sampler=None):
+    def __init__(self, directory, model, forward_fn=None, label_sampler=None):
         self.directory = Path(directory)
-        self.vae = vae
+        self.model = model
         self.forward_fn = forward_fn
         self.label_sampler = label_sampler
         self.base_dir = Path("visu") / self.directory
-        for sub in ("recon", "pca", "umap", "interp", "noise"):
+        for sub in ("recon", "pca", "umap", "interp", "noise", "prior"):
             (self.base_dir / sub).mkdir(parents=True, exist_ok=True)
 
     def _forward(self, model, images, labels=None):
@@ -50,9 +50,10 @@ class Visualizer:
         return model.decoder(latents)
 
     def _split_outputs(self, outputs):
-        if self.vae:
+        if self.model.__class__.__name__ == "VAE" or self.model.__class__.__name__ == "CVAE":
             decoded, mu, logvar = outputs
             return decoded, mu, logvar
+
         decoded, latent = outputs
         return decoded, latent, None
 
@@ -217,19 +218,25 @@ class Visualizer:
         model.to(device)
         model.eval()
 
-        z = torch.randn(num_images, latent_dim, device=device)
+        if isinstance(latent_dim, (tuple, list)):
+            z = torch.randn((num_images, *latent_dim), device=device)
+        else:
+            if latent_dim is None:
+                raise ValueError("latent_dim must be provided for noise visualization")
+            z = torch.randn(num_images, int(latent_dim), device=device)
         labels = None
         if self.label_sampler is not None:
             labels = self.label_sampler(num_images, device)
 
         generated = self._decode(model, z, labels)
-        if self.vae:
+        if model.__class__.__name__ == "VAE" or model.__class__.__name__ == "CVAE":
             re_mu, _ = self._encode(model, generated, labels)
             reencoded = re_mu
         else:
             reencoded = self._encode(model, generated, labels)
 
-        latent_drift = torch.norm(reencoded - z, dim=1).mean().item()
+        diff = reencoded - z
+        latent_drift = diff.reshape(diff.size(0), -1).norm(dim=1).mean().item()
 
         save_dir = self.base_dir / "noise"
         fig = plt.figure(figsize=(1.5 * num_images, 2))
@@ -284,3 +291,81 @@ class Visualizer:
         plt.ylabel('Loss')        
         plt.savefig(self.base_dir / f"{name}.png")
         plt.close()
+
+    @torch.no_grad()
+    def visu_from_transformer_prior(
+        self,
+        transformer,
+        vqvae,
+        device='cuda',
+        epoch=0,
+        num_images=10,
+        latent_shape=None,
+        temperature=1.0,
+        top_k=None,
+    ):
+        """Sample codebook indices with a Transformer prior, decode with VQ-VAE, and save a grid."""
+        if latent_shape is None or len(latent_shape) != 3:
+            raise ValueError("latent_shape must be provided as (C, H, W) for VQ-VAE decoding")
+
+        transformer.to(device)
+        transformer.eval()
+        vqvae.to(device)
+        vqvae.eval()
+
+        _, h, w = latent_shape
+        latent_hw = h * w
+
+        num_embeddings = vqvae.vector_quantizer.num_embeddings
+        vocab_size = transformer.token_embedding.num_embeddings
+        max_seq_len = transformer.position_embedding.num_embeddings
+
+        use_sos = vocab_size == (num_embeddings + 1) and max_seq_len == (latent_hw + 1)
+
+        if max_seq_len < latent_hw:
+            raise ValueError(
+                f"Transformer seq_len ({max_seq_len}) is smaller than latent grid ({latent_hw})."
+            )
+
+        if use_sos:
+            seq = torch.full((num_images, 1), num_embeddings, device=device, dtype=torch.long)
+            total_len = latent_hw + 1
+        else:
+            seq = torch.randint(0, num_embeddings, (num_images, 1), device=device, dtype=torch.long)
+            total_len = latent_hw
+
+        for _ in range(seq.size(1), total_len):
+            logits = transformer(seq)
+            next_logits = logits[:, -1, :] / max(temperature, 1e-6)
+            if top_k is not None and top_k > 0:
+                top_k = min(top_k, next_logits.size(-1))
+                values, indices = torch.topk(next_logits, top_k, dim=-1)
+                mask = torch.full_like(next_logits, float('-inf'))
+                mask.scatter_(1, indices, values)
+                next_logits = mask
+            probs = torch.softmax(next_logits, dim=-1)
+            next_token = torch.multinomial(probs, num_samples=1)
+            seq = torch.cat([seq, next_token], dim=1)
+
+        if use_sos:
+            seq = seq[:, 1:]
+
+        seq = seq[:, :latent_hw]
+
+        embeddings = vqvae.vector_quantizer.embedding(seq)
+        quantized = embeddings.view(num_images, h, w, -1).permute(0, 3, 1, 2).contiguous()
+
+        generated = vqvae.decoder(quantized)
+
+        save_dir = self.base_dir / "prior"
+        fig = plt.figure(figsize=(1.5 * num_images, 2))
+        for i in range(num_images):
+            plt.subplot(1, num_images, i + 1)
+            plt.imshow(generated[i, 0].detach().cpu(), cmap='gray')
+            plt.axis('off')
+        plt.suptitle("Transformer prior samples")
+        fig.tight_layout()
+        fig.savefig(save_dir / f"epoch_{epoch}.png")
+        plt.close(fig)
+
+        return generated.detach().cpu()

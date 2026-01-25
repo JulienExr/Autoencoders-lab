@@ -19,7 +19,7 @@ def train_cvae(cvae, dataloader, test_loader, num_epochs=10, learning_rate=1e-3,
 
     visualizer = Visualizer(
         directory=visu_dir,
-        vae=True,
+        model=cvae,
         forward_fn=lambda model, images, labels: model(images, labels),
         label_sampler=sample_labels,
     )

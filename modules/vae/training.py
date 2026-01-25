@@ -13,7 +13,7 @@ def train_vae(vae, dataloader, test_loader, num_epochs=10, learning_rate=1e-3, l
     recon_losses = []
     kl_losses = []
     losses = []
-    visualizer = Visualizer(directory=visu_dir, vae=True)
+    visualizer = Visualizer(directory=visu_dir, model=vae)
 
     for epoch in range(num_epochs):
         epoch_loss = 0.0
@@ -40,6 +40,7 @@ def train_vae(vae, dataloader, test_loader, num_epochs=10, learning_rate=1e-3, l
             epoch_loss += loss.item()
             epoch_recon_loss += recon_loss.item()
             epoch_kl_loss += kl_loss.item()
+            
             if (idx + 1) % 100 == 0 or idx == len(dataloader)-1:
                 print(f"  Batch [{idx+1}/{len(dataloader)}], recon_Loss: {recon_loss.item():.4f} | KL_Loss: {kl_loss.item():.4f} | mu std: {mu.std().item():.4f} logvar mean: {logvar.mean().item():.4f}", end='\r', flush=True)
 

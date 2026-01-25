@@ -8,11 +8,14 @@ from modules.vae.training import train_vae
 from modules.vae.vae import build_vae
 from modules.cvae.training import train_cvae
 from modules.cvae.cvae import build_cvae
+from modules.vq_vae.training import train_transformer_prior, train_vqvae
+from modules.vq_vae.vq_vae import build_vqvae
+from modules.vq_vae.tranformer_prior import build_transformer_prior
 from src.data import get_fashion_mnist_dataloaders, get_mnist_dataloaders
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Train Autoencoder or Variational Autoencoder")
-    parser.add_argument('--model', type=str, choices=['AE', 'VAE', 'CVAE'], default='AE', help="Model type to train: 'AE', 'VAE' or 'CVAE'")
+    parser.add_argument('--model', type=str, choices=['AE', 'VAE', 'CVAE', 'VQ-VAE'], default='AE', help="Model type to train: 'AE', 'VAE', 'CVAE' or 'VQ-VAE'")
     parser.add_argument('--dataset', type=str, choices=['mnist', 'fashion_mnist'], default='mnist', help="Dataset to use: 'mnist' or 'fashion_mnist'")
     parser.add_argument('--latent_dim', type=int, default=32, help="Latent dimension size")
     parser.add_argument('--epochs', type=int, default=50, help="Number of training epochs")
@@ -90,6 +93,34 @@ def main():
         torch.save(model.encoder.state_dict(), save_path / f'encoder_{args.dataset}.pth')
         torch.save(model.decoder.state_dict(), save_path / f'decoder_{args.dataset}.pth')
         print(f"Model saved as '{save_path / f'encoder_{args.dataset}.pth'}' and '{save_path / f'decoder_{args.dataset}.pth'}'.")
+
+    elif args.model == 'VQ-VAE':
+        if args.dataset == 'mnist':
+            train_loader, test_loader = get_mnist_dataloaders(batch_size=128, normalize=True)
+        elif args.dataset == 'fashion_mnist':
+            train_loader, test_loader = get_fashion_mnist_dataloaders(batch_size=128, normalize=True)
+        num_embeddings = 64
+        embedding_dim = 64
+        commitment_cost = 0.25
+        
+        model = build_vqvae(num_embeddings=num_embeddings, embedding_dim=embedding_dim, commitment_cost=commitment_cost)
+        print("Starting training...")
+        train_vqvae(model, train_loader, test_loader, num_epochs=args.epochs, learning_rate=1e-3,
+                     visu_dir=f"{args.dataset}_vqvae", visualize=args.visualize)
+        save_path = Path('models/VQ-VAE')
+        save_path.mkdir(parents=True, exist_ok=True)
+        torch.save(model.encoder.state_dict(), save_path / f'encoder_{args.dataset}.pth')
+        torch.save(model.decoder.state_dict(), save_path / f'decoder_{args.dataset}.pth')
+        torch.save(model.vector_quantizer.state_dict(), save_path / f'vq_{args.dataset}.pth')
+        print(f"Model saved as '{save_path / f'encoder_{args.dataset}.pth'}' and '{save_path / f'decoder_{args.dataset}.pth'}'.")
+
+        transformer = build_transformer_prior(vocab_size=num_embeddings, embedding_dim=embedding_dim, num_head=4, num_layers=6, seq_len=49)
+        train_transformer_prior(transformer, model, train_loader, num_epochs=args.epochs, learning_rate=3e-4, device=device)
+
+        save_path = Path('models/TransformerPrior')
+        save_path.mkdir(parents=True, exist_ok=True)
+        torch.save(transformer.state_dict(), save_path / f'transformer_{args.dataset}.pth')
+        print(f"Transformer prior model saved as '{save_path / f'transformer_{args.dataset}.pth'}'.")
 
     else:
         raise ValueError(f"Unsupported model type: {args.model}")
