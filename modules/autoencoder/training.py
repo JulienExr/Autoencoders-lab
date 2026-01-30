@@ -9,9 +9,10 @@ def train_autoencoder(autoencoder, dataloader, test_loader, num_epochs=10, learn
     autoencoder.train()
 
     optimizer = torch.optim.Adam(autoencoder.parameters(), lr=learning_rate)
-    criterion = torch.nn.MSELoss()
+    # criterion = torch.nn.MSELoss()
+    criterion = torch.nn.L1Loss()
     losses = []
-    visualizer = Visualizer(directory=visu_dir)
+    visualizer = Visualizer(directory=visu_dir, model= autoencoder)
 
     for epoch in range(num_epochs):
         epoch_loss = 0.0

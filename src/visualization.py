@@ -64,6 +64,31 @@ class Visualizer:
         eps = torch.randn_like(std)
         return mu + eps * std
 
+    def _prepare_image_for_imshow(self, image):
+        image = image.detach().cpu().float()
+        if image.ndim == 4:
+            image = image[0]
+        if image.ndim == 3 and image.shape[0] in (1, 3):
+            image = image.permute(1, 2, 0)
+        if image.ndim == 3 and image.shape[-1] == 1:
+            image = image[..., 0]
+
+        img_min = image.min()
+        img_max = image.max()
+        if img_max > 1 or img_min < 0:
+            image = (image - img_min) / (img_max - img_min + 1e-8)
+        else:
+            image = image.clamp(0, 1)
+
+        return image
+
+    def _imshow(self, image):
+        prepared = self._prepare_image_for_imshow(image)
+        if prepared.ndim == 2:
+            plt.imshow(prepared, cmap="gray")
+        else:
+            plt.imshow(prepared)
+
     def visualize_reconstructions(self, model, dataloader, num_images=10, device='cuda', epoch=0):
         model.to(device)
         model.eval()
@@ -84,7 +109,7 @@ class Visualizer:
                         break
 
                     plt.subplot(2, num_images, images_shown + 1)
-                    plt.imshow(images[i].cpu().squeeze(), cmap='gray')
+                    self._imshow(images[i])
                     plt.axis('off')
                     if images_shown == 0:
                         fig.text(0.5,0.94,'Original Images', ha='center', va='bottom', fontsize=12, fontweight='bold',
@@ -92,7 +117,7 @@ class Visualizer:
                         )
 
                     plt.subplot(2, num_images, images_shown + 1 + num_images)
-                    plt.imshow(decoded[i].cpu().squeeze(), cmap='gray')
+                    self._imshow(decoded[i])
                     plt.axis('off')
                     if images_shown == 0:
                         fig.text(0.5, 0.46, 'Reconstructed Images', ha='center', va='bottom', fontsize=12, fontweight='bold',
@@ -129,8 +154,9 @@ class Visualizer:
         Z = torch.cat(Z_list, dim=0)
         Y = torch.cat(Y_list, dim=0)
 
+        Z = Z.reshape(Z.size(0), -1)
         Z = Z - Z.mean(dim=0, keepdim=True)
-        U, S, Vh = torch.linalg.svd(Z, full_matrices=False)
+        _, _, Vh = torch.linalg.svd(Z, full_matrices=False)
         Z2 = Z @ Vh[:2].T
 
         fig = plt.figure(figsize=(7, 6))
@@ -157,8 +183,10 @@ class Visualizer:
                 Z_list.append(encoded.detach().cpu())
                 Y_list.append(label.cpu())
 
-        Z = torch.cat(Z_list, dim=0).numpy()
+        Z = torch.cat(Z_list, dim=0)
         Y = torch.cat(Y_list, dim=0).numpy()
+
+        Z = Z.reshape(Z.size(0), -1).numpy()
 
         reducer = umap.UMAP(n_neighbors=n_neighbors, min_dist=min_dist, n_components=2, metric="euclidean")
         Z2 = reducer.fit_transform(Z)
@@ -196,7 +224,9 @@ class Visualizer:
         _, z5, logvar5 = self._split_outputs(self._forward(model, x5, label5))
 
         alphas = torch.linspace(0, 1, steps, device=device)
-        z_interp = (1 - alphas[:, None]) * z2 + alphas[:, None] * z5
+        alpha_shape = (steps,) + (1,) * (z2.dim() - 1)
+        alphas = alphas.view(alpha_shape)
+        z_interp = (1 - alphas) * z2 + alphas * z5
 
         interp_labels = torch.where(alphas < 0.5, label2.item(), label5.item())
         interp_labels = interp_labels.to(device=device, dtype=torch.long)
@@ -206,7 +236,7 @@ class Visualizer:
         fig = plt.figure(figsize=(1.5 * steps, 2))
         for i in range(steps):
             plt.subplot(1, steps, i + 1)
-            plt.imshow(x_interp[i, 0], cmap="gray")
+            self._imshow(x_interp[i])
             plt.axis("off")
         plt.suptitle("Interpolation latent : 2 → 5")
         fig.savefig(self.base_dir / "interp" / f"epoch_{epoch}.png")
@@ -223,7 +253,11 @@ class Visualizer:
         else:
             if latent_dim is None:
                 raise ValueError("latent_dim must be provided for noise visualization")
-            z = torch.randn(num_images, int(latent_dim), device=device)
+            needs_spatial = not any(isinstance(m, torch.nn.Linear) for m in model.decoder.modules())
+            if needs_spatial:
+                z = torch.randn(num_images, int(latent_dim), 4, 4, device=device)
+            else:
+                z = torch.randn(num_images, int(latent_dim), device=device)
         labels = None
         if self.label_sampler is not None:
             labels = self.label_sampler(num_images, device)
@@ -242,7 +276,7 @@ class Visualizer:
         fig = plt.figure(figsize=(1.5 * num_images, 2))
         for i in range(num_images):
             plt.subplot(1, num_images, i + 1)
-            plt.imshow(generated[i, 0].detach().cpu(), cmap='gray')
+            self._imshow(generated[i])
             plt.axis('off')
         plt.suptitle("Samples from random latent")
         save_path = save_dir / f"epoch_{epoch}.png"
@@ -270,7 +304,7 @@ class Visualizer:
             row = i // num_classes
             col = i % num_classes
             plt.subplot(num_per_label, num_classes, i + 1)
-            plt.imshow(generated[i, 0].detach().cpu(), cmap='gray')
+            self._imshow(generated[i])
             plt.axis('off')
             if row == 0:
                 plt.title(str(col), fontsize=10)
@@ -361,7 +395,7 @@ class Visualizer:
         fig = plt.figure(figsize=(1.5 * num_images, 2))
         for i in range(num_images):
             plt.subplot(1, num_images, i + 1)
-            plt.imshow(generated[i, 0].detach().cpu(), cmap='gray')
+            self._imshow(generated[i])
             plt.axis('off')
         plt.suptitle("Transformer prior samples")
         fig.tight_layout()
