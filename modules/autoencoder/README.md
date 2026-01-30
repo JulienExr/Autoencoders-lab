@@ -58,6 +58,30 @@ Below are example placeholders from the Fashion-MNIST dataset. This dataset is m
   <figcaption style="font-style: italic;">Figure: Fashion-MNIST AE reconstructions after 20 epochs.</figcaption>
 </figure>
 
+## CIFAR-10 experiment (color images)
+
+For CIFAR-10, the AE is trained on 32×32 RGB images (3 channels). The reconstruction target and loss are the same (MSE), but the decoder must model color structure and edges, which makes reconstructions smoother and more “texture-like” than MNIST/Fashion-MNIST.
+
+<figure style="text-align: center;">
+  <img src="../../demo/cifar_recon_ae_50.png" alt="CIFAR-10 AE reconstructions" style="max-width: 60%;" />
+  <figcaption style="font-style: italic;">Figure: CIFAR-10 AE reconstructions (epoch 50).</figcaption>
+</figure>
+
+<figure style="text-align: center;">
+  <img src="../../demo/cifar_pca_ae_50.png" alt="CIFAR-10 AE PCA" style="max-width: 60%;" />
+  <figcaption style="font-style: italic;">Figure: CIFAR-10 AE PCA projection (epoch 50).</figcaption>
+</figure>
+
+<figure style="text-align: center;">
+  <img src="../../demo/cifar_inter_ae_50.png" alt="CIFAR-10 AE interpolation" style="max-width: 100%;" />
+  <figcaption style="font-style: italic;">Figure: CIFAR-10 AE interpolation (epoch 50).</figcaption>
+</figure>
+
+Notes:
+- Expect slightly blurrier reconstructions due to the higher complexity of natural images.
+- Latent projections (PCA/UMAP) can be less clustered because classes overlap more in RGB space.
+- Interpolation is still meaningful but may look like gradual color/texture morphing instead of digit-style changes.
+
 ## Code
 - Model: `Encoder`, `Decoder`, `Autoencoder` in `modules/autoencoder/ae.py`.
 - Training loop: `modules/autoencoder/training.py`.

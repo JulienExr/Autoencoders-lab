@@ -49,6 +49,30 @@ Below are example placeholders from the Fashion-MNIST dataset. This dataset is m
   <figcaption style="font-style: italic;">Figure: Fashion-MNIST VAE samples drawn from the latent prior.</figcaption>
 </figure>
 
+## CIFAR-10 experiment (color images)
+
+For CIFAR-10, the VAE is trained on 32×32 RGB images (3 channels). The KL regularization still encourages a smooth, Gaussian-like latent space, but the reconstructions are generally blurrier due to the complexity of natural color images.
+
+<figure style="text-align: center;">
+  <img src="../../demo/cifar_recon_vae_50.png" alt="CIFAR-10 VAE reconstructions" style="max-width: 60%;" />
+  <figcaption style="font-style: italic;">Figure: CIFAR-10 VAE reconstructions (epoch 50).</figcaption>
+</figure>
+
+<figure style="text-align: center;">
+  <img src="../../demo/cifar_pca_vae_50.png" alt="CIFAR-10 VAE PCA" style="max-width: 60%;" />
+  <figcaption style="font-style: italic;">Figure: CIFAR-10 VAE PCA projection (epoch 50).</figcaption>
+</figure>
+
+<figure style="text-align: center;">
+  <img src="../../demo/cifar_inter_vae_50.png" alt="CIFAR-10 VAE interpolation" style="max-width: 100%;" />
+  <figcaption style="font-style: italic;">Figure: CIFAR-10 VAE interpolation (epoch 50).</figcaption>
+</figure>
+
+Notes:
+- Samples from the prior tend to look more “colorful blobs” than sharp objects at small resolutions.
+- Interpolations are smoother and often show gradual shifts in color and texture.
+- PCA/UMAP embeddings are less cleanly separated because CIFAR-10 classes overlap more in pixel space. However, we clearly see a distribution that fills the latent space more evenly.
+
 ## Code
 - Model: `VAE`, `VAE_Encoder`, `VAE_Decoder`, plus `PP` variants in `modules/vae/vae.py`.
 - Training loop: `modules/vae/training.py`.
